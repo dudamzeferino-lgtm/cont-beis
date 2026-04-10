@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestão Financeira</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f11;
+    --surface: #16181c;
+    --surface2: #1e2128;
+    --border: #2a2d35;
+    --border2: #3a3e4a;
+    --text: #f0f1f3;
+    --muted: #7a7f8e;
+    --hint: #4a4e5a;
+    --green: #2ecc8f;
+    --green-dim: #1a3d2e;
+    --green-text: #3ddc9f;
+    --red: #e8524a;
+    --red-dim: #3d1a1a;
+    --red-text: #f0706a;
+    --blue: #5b8def;
+    --blue-dim: #1a2540;
+    --blue-text: #7aa3f5;
+    --accent: #f5c842;
+    --accent-dim: #3a3010;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── GRID LAYOUT ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .logo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .logo-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .logo-sub {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--hint);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+  .nav-icon { width: 16px; text-align: center; font-style: normal; font-size: 14px; }
+
+  .sidebar-saldo {
+    margin-top: auto;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+  }
+  .sidebar-saldo .slabel { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .sidebar-saldo .sval { font-family: 'DM Serif Display', serif; font-size: 26px; }
+  .sidebar-saldo .sval.pos { color: var(--green-text); }
+  .sidebar-saldo .sval.neg { color: var(--red-text); }
+  .sidebar-saldo .sdate { font-size: 11px; color: var(--hint); margin-top: 4px; font-family: 'DM Mono', monospace; }
+
+  /* ── MAIN ── */
+  .main {
+    padding: 2rem 2.5rem;
+    overflow-y: auto;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .page-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text); }
+  .page-sub { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+  /* ── METRIC CARDS ── */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 2rem;
+  }
+
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .metric:hover { border-color: var(--border2); }
+  .metric::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .metric.rec::before { background: var(--green); }
+  .metric.des::before { background: var(--red); }
+  .metric.sal::before { background: var(--blue); }
+
+  .metric-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+  .metric.rec .metric-icon { background: var(--green-dim); }
+  .metric.des .metric-icon { background: var(--red-dim); }
+  .metric.sal .metric-icon { background: var(--blue-dim); }
+
+  .metric-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .metric-val { font-family: 'DM Serif Display', serif; font-size: 24px; }
+  .metric.rec .metric-val { color: var(--green-text); }
+  .metric.des .metric-val { color: var(--red-text); }
+  .metric.sal .metric-val { color: var(--blue-text); }
+  .metric-delta { font-size: 11px; color: var(--hint); margin-top: 4px; font-family: 'DM Mono', monospace; }
+
+  /* ── GRID 2 COLS ── */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+
+  /* ── FORM CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .tipo-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 1rem;
+    background: var(--surface2);
+    padding: 4px;
+    border-radius: var(--radius);
+  }
+  .tipo-btn {
+    padding: 7px 12px;
+    border: none;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .tipo-btn.active.rec { background: var(--green-dim); color: var(--green-text); }
+  .tipo-btn.active.des { background: var(--red-dim); color: var(--red-text); }
+
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    height: 38px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 0 12px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  .form-group input:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .form-group select option { background: var(--surface2); }
+
+  .btn-primary {
+    width: 100%;
+    height: 40px;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    color: #0e0f11;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.02em;
+    transition: all 0.15s;
+    margin-top: 4px;
+  }
+  .btn-primary:hover { background: #ffd55a; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* ── CHART ── */
+  .chart-wrap { position: relative; height: 180px; margin-top: 4px; }
+  .chart-svg { width: 100%; height: 100%; }
+  .chart-tooltip {
+    position: absolute;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 11px;
+    pointer-events: none;
+    display: none;
+    min-width: 120px;
+    font-family: 'DM Mono', monospace;
+  }
+  .chart-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .leg { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .leg-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* ── TABLE ── */
+  .table-card { margin-bottom: 1.5rem; }
+  .table-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filters select,
+  .filters input[type=month],
+  .filters input[type=text] {
+    height: 32px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 0 10px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .filters select:focus,
+  .filters input:focus { outline: none; border-color: var(--accent); }
+  .filters select option { background: var(--surface2); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--hint);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  td {
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background 0.1s; }
+  tbody tr:hover td { background: var(--surface2); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .badge.rec { background: var(--green-dim); color: var(--green-text); }
+  .badge.des { background: var(--red-dim); color: var(--red-text); }
+
+  .td-cat {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .td-val { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; white-space: nowrap; }
+  .td-val.rec { color: var(--green-text); }
+  .td-val.des { color: var(--red-text); }
+  .td-date { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+
+  .btn-del {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--hint);
+    cursor: pointer;
+    font-size: 14px;
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .btn-del:hover { background: var(--red-dim); color: var(--red-text); border-color: var(--red-dim); }
+
+  .empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--hint);
+    font-size: 13px;
+  }
+  .empty-icon { font-size: 32px; margin-bottom: 8px; opacity: 0.4; }
+
+  /* ── CATEGORY PILLS ── */
+  .cat-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .cat-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+  }
+  .cat-pill-name { font-size: 11px; color: var(--muted); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cat-pill-val { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; }
+  .cat-pill-val.rec { color: var(--green-text); }
+  .cat-pill-val.des { color: var(--red-text); }
+
+  /* ── PAGINATION ── */
+  .pag {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 14px;
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .pag-btns { display: flex; gap: 6px; }
+  .pag-btn {
+    height: 28px; padding: 0 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.12s;
+  }
+  .pag-btn:hover { border-color: var(--border2); }
+  .pag-btn:disabled { opacity: 0.3; cursor: default; }
+  .pag-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; padding: 1rem; gap: 1rem; }
+    .sidebar-saldo { margin-top: 0; min-width: 180px; }
+    .metrics { grid-template-columns: 1fr 1fr; }
+    .grid2 { grid-template-columns: 1fr; }
+    .main { padding: 1.5rem 1rem; }
+  }
+  @media (max-width: 560px) {
+    .metrics { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-title">Contábil</div>
+      <div class="logo-sub">Gestão financeira</div>
+    </div>
+
+    <nav>
+      <div class="nav-label">Menu</div>
+      <button class="nav-item active" onclick="showPage('dashboard')">
+        <i class="nav-icon">◈</i> Dashboard
+      </button>
+      <button class="nav-item" onclick="showPage('lancamentos')">
+        <i class="nav-icon">⊞</i> Lançamentos
+      </button>
+      <button class="nav-item" onclick="showPage('categorias')">
+        <i class="nav-icon">◎</i> Categorias
+      </button>
+    </nav>
+
+    <div class="sidebar-saldo">
+      <div class="slabel">Saldo atual</div>
+      <div class="sval" id="sb-saldo">R$ 0,00</div>
+      <div class="sdate" id="sb-date"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- PAGE: DASHBOARD -->
+    <div id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub" id="hdr-date"></div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric rec">
+          <div class="metric-icon">↑</div>
+          <div class="metric-label">Receitas</div>
+          <div class="metric-val" id="m-rec">R$ 0,00</div>
+          <div class="metric-delta" id="m-rec-cnt">0 lançamentos</div>
+        </div>
+        <div class="metric des">
+          <div class="metric-icon">↓</div>
+          <div class="metric-label">Despesas</div>
+          <div class="metric-val" id="m-des">R$ 0,00</div>
+          <div class="metric-delta" id="m-des-cnt">0 lançamentos</div>
+        </div>
+        <div class="metric sal">
+          <div class="metric-icon">◈</div>
+          <div class="metric-label">Saldo líquido</div>
+          <div class="metric-val" id="m-sal">R$ 0,00</div>
+          <div class="metric-delta" id="m-sal-info">este mês</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <!-- FORM -->
+        <div class="card">
+          <div class="card-title"><span class="card-title-dot"></span> Novo lançamento</div>
+          <div class="tipo-toggle">
+            <button class="tipo-btn active rec" id="btn-rec" onclick="setTipo('receita')">↑ Receita</button>
+            <button class="tipo-btn des" id="btn-des" onclick="setTipo('despesa')">↓ Despesa</button>
+          </div>
+          <div class="form-group">
+            <label>Descrição</label>
+            <input type="text" id="inp-desc" placeholder="Ex: Salário, Aluguel, Supermercado...">
+          </div>
+          <div class="form-group">
+            <label>Valor (R$)</label>
+            <input type="number" id="inp-val" placeholder="0,00" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Categoria</label>
+            <select id="inp-cat">
+              <option value="">Selecionar categoria...</option>
+              <option>Alimentação</option>
+              <option>Transporte</option>
+              <option>Moradia</option>
+              <option>Saúde</option>
+              <option>Educação</option>
+              <option>Lazer</option>
+              <option>Salário</option>
+              <option>Freelance</option>
+              <option>Investimento</option>
+              <option>Dividendos</option>
+              <option>Outros</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Data</label>
+            <input type="date" id="inp-data">
+          </div>
+          <button class="btn-primary" onclick="addTrans()">+ Adicionar lançamento</button>
+        </div>
+
+        <!-- CHART -->
+        <div class="card">
+          <div class="card-title"><span class="card-title-dot"></span> Últimos 6 meses</div>
+          <div class="chart-wrap">
+            <svg class="chart-svg" id="chart-svg" viewBox="0 0 400 160" preserveAspectRatio="none"></svg>
+            <div class="chart-tooltip" id="chart-tooltip"></div>
+          </div>
+          <div class="chart-legend">
+            <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Receitas</div>
+            <div class="leg"><div class="leg-dot" style="background:var(--red)"></div>Despesas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECENT -->
+      <div class="card table-card">
+        <div class="table-head">
+          <div class="card-title" style="margin:0"><span class="card-title-dot"></span> Lançamentos recentes</div>
+          <button class="pag-btn" onclick="showPage('lancamentos')">Ver todos →</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Tipo</th>
+              <th style="text-align:right">Valor</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-recent"></tbody>
+        </table>
+        <div id="empty-recent" class="empty" style="display:none">
+          <div class="empty-icon">◌</div>
+          Nenhum lançamento ainda. Adicione sua primeira transação!
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: LANCAMENTOS -->
+    <div id="page-lancamentos" style="display:none">
+      <div class="page-header">
+        <div class="page-title">Lançamentos</div>
+        <div class="page-sub" id="count-label">0 registros</div>
+      </div>
+
+      <div class="card table-card">
+        <div class="table-head">
+          <div class="card-title" style="margin:0"><span class="card-title-dot"></span> Histórico completo</div>
+          <div class="filters">
+            <input type="text" id="filt-search" placeholder="Buscar..." oninput="renderLanc()" style="width:140px">
+            <input type="month" id="filt-mes" onchange="renderLanc()">
+            <select id="filt-tipo" onchange="renderLanc()">
+              <option value="">Todos os tipos</option>
+              <option value="receita">Receitas</option>
+              <option value="despesa">Despesas</option>
+            </select>
+            <select id="filt-cat" onchange="renderLanc()">
+              <option value="">Todas as categorias</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Tipo</th>
+              <th style="text-align:right">Valor</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-lanc"></tbody>
+        </table>
+        <div id="empty-lanc" class="empty" style="display:none">
+          <div class="empty-icon">◌</div>
+          Nenhuma transação encontrada.
+        </div>
+        <div class="pag" id="pag-wrap">
+          <span id="pag-info"></span>
+          <div class="pag-btns" id="pag-btns"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: CATEGORIAS -->
+    <div id="page-categorias" style="display:none">
+      <div class="page-header">
+        <div class="page-title">Categorias</div>
+        <div class="page-sub">resumo por categoria</div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title"><span class="card-title-dot"></span> Receitas por categoria</div>
+          <div class="cat-summary" id="cat-rec"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="card-title-dot"></span> Despesas por categoria</div>
+          <div class="cat-summary" id="cat-des"></div>
+        </div>
+      </div>
+
+      <!-- Top categorias de despesas - barra horizontal -->
+      <div class="card" style="margin-top:0">
+        <div class="card-title"><span class="card-title-dot"></span> Top despesas</div>
+        <div id="bars-des"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── STATE ──
+let tipo = 'receita';
+let trans = JSON.parse(localStorage.getItem('fin_trans_v2') || '[]');
+let currentPage = 1;
+const PER_PAGE = 12;
+
+// ── UTILS ──
+const fmt = v => 'R$\u00a0' + parseFloat(v).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const fmtDate = d => { const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; };
+const fmtMonth = d => { const [y,m] = d.split('-'); const ms = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']; return ms[parseInt(m)-1]+'\u202f'+y.slice(2); };
+const save = () => localStorage.setItem('fin_trans_v2', JSON.stringify(trans));
+
+// ── INIT ──
+document.getElementById('inp-data').value = new Date().toISOString().slice(0,10);
+document.getElementById('hdr-date').textContent = new Date().toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+document.getElementById('sb-date').textContent = new Date().toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'});
+
+// ── NAVIGATION ──
+function showPage(p) {
+  ['dashboard','lancamentos','categorias'].forEach(id => {
+    document.getElementById('page-'+id).style.display = id===p ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach((b,i) => {
+    b.classList.toggle('active', ['dashboard','lancamentos','categorias'][i] === p);
+  });
+  if (p === 'lancamentos') renderLanc();
+  if (p === 'categorias') renderCats();
+}
+
+// ── TIPO TOGGLE ──
+function setTipo(t) {
+  tipo = t;
+  document.getElementById('btn-rec').className = 'tipo-btn' + (t==='receita' ? ' active rec' : '');
+  document.getElementById('btn-des').className = 'tipo-btn des' + (t==='despesa' ? ' active des' : '');
+}
+
+// ── ADD TRANSACTION ──
+function addTrans() {
+  const desc = document.getElementById('inp-desc').value.trim();
+  const val = parseFloat(document.getElementById('inp-val').value);
+  const cat = document.getElementById('inp-cat').value;
+  const data = document.getElementById('inp-data').value;
+  if (!desc) { shake('inp-desc'); return; }
+  if (!val || val <= 0) { shake('inp-val'); return; }
+  if (!cat) { shake('inp-cat'); return; }
+  if (!data) { shake('inp-data'); return; }
+  trans.unshift({ id: Date.now(), tipo, desc, val, cat, data });
+  save();
+  document.getElementById('inp-desc').value = '';
+  document.getElementById('inp-val').value = '';
+  renderAll();
+}
+
+function shake(id) {
+  const el = document.getElementById(id);
+  el.style.borderColor = 'var(--red)';
+  el.focus();
+  setTimeout(() => el.style.borderColor = '', 1000);
+}
+
+// ── DELETE ──
+function delTrans(id) {
+  trans = trans.filter(t => t.id !== id);
+  save();
+  renderAll();
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  renderMetrics();
+  renderRecent();
+  renderChart();
+  renderSidebar();
+  updateCatFilter();
+}
+
+// ── METRICS ──
+function renderMetrics() {
+  const rec = trans.filter(t => t.tipo==='receita').reduce((s,t) => s+t.val, 0);
+  const des = trans.filter(t => t.tipo==='despesa').reduce((s,t) => s+t.val, 0);
+  const sal = rec - des;
+  document.getElementById('m-rec').textContent = fmt(rec);
+  document.getElementById('m-des').textContent = fmt(des);
+  document.getElementById('m-sal').textContent = fmt(sal);
+  document.getElementById('m-rec-cnt').textContent = trans.filter(t=>t.tipo==='receita').length + ' lançamentos';
+  document.getElementById('m-des-cnt').textContent = trans.filter(t=>t.tipo==='despesa').length + ' lançamentos';
+  const mSal = document.getElementById('m-sal');
+  mSal.style.color = sal >= 0 ? 'var(--green-text)' : 'var(--red-text)';
+}
+
+// ── SIDEBAR ──
+function renderSidebar() {
+  const rec = trans.reduce((s,t) => t.tipo==='receita' ? s+t.val : s, 0);
+  const des = trans.reduce((s,t) => t.tipo==='despesa' ? s+t.val : s, 0);
+  const sal = rec - des;
+  const el = document.getElementById('sb-saldo');
+  el.textContent = fmt(sal);
+  el.className = 'sval ' + (sal >= 0 ? 'pos' : 'neg');
+}
+
+// ── ROW HTML ──
+function rowHTML(t) {
+  return `<tr>
+    <td class="td-date">${fmtDate(t.data)}</td>
+    <td>${t.desc}</td>
+    <td class="td-cat">${t.cat}</td>
+    <td><span class="badge ${t.tipo==='receita'?'rec':'des'}">${t.tipo==='receita'?'Receita':'Despesa'}</span></td>
+    <td style="text-align:right" class="td-val ${t.tipo==='receita'?'rec':'des'}">${t.tipo==='receita'?'+':'-'}${fmt(t.val)}</td>
+    <td><button class="btn-del" onclick="delTrans(${t.id})" title="Remover">×</button></td>
+  </tr>`;
+}
+
+// ── RECENT (dashboard, 8 items) ──
+function renderRecent() {
+  const tbody = document.getElementById('tbody-recent');
+  const recent = trans.slice(0, 8);
+  tbody.innerHTML = recent.map(rowHTML).join('');
+  document.getElementById('empty-recent').style.display = recent.length ? 'none' : 'block';
+}
+
+// ── LANCAMENTOS TABLE ──
+function renderLanc() {
+  currentPage = 1;
+  renderLancPage();
+}
+
+function renderLancPage() {
+  const search = (document.getElementById('filt-search')?.value || '').toLowerCase();
+  const mes = document.getElementById('filt-mes')?.value || '';
+  const ftipo = document.getElementById('filt-tipo')?.value || '';
+  const fcat = document.getElementById('filt-cat')?.value || '';
+
+  let filtered = trans.filter(t => {
+    if (mes && !t.data.startsWith(mes)) return false;
+    if (ftipo && t.tipo !== ftipo) return false;
+    if (fcat && t.cat !== fcat) return false;
+    if (search && !t.desc.toLowerCase().includes(search) && !t.cat.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  const total = filtered.length;
+  const pages = Math.max(1, Math.ceil(total / PER_PAGE));
+  if (currentPage > pages) currentPage = pages;
+  const start = (currentPage - 1) * PER_PAGE;
+  const slice = filtered.slice(start, start + PER_PAGE);
+
+  document.getElementById('tbody-lanc').innerHTML = slice.map(rowHTML).join('');
+  document.getElementById('empty-lanc').style.display = slice.length ? 'none' : 'block';
+  document.getElementById('count-label').textContent = total + ' registro' + (total!==1?'s':'');
+  document.getElementById('pag-info').textContent = total > 0 ? `${start+1}–${Math.min(start+PER_PAGE,total)} de ${total}` : '';
+
+  // pagination buttons
+  const btns = document.getElementById('pag-btns');
+  btns.innerHTML = '';
+  const prev = document.createElement('button');
+  prev.className = 'pag-btn'; prev.textContent = '←'; prev.disabled = currentPage <= 1;
+  prev.onclick = () => { currentPage--; renderLancPage(); };
+  btns.appendChild(prev);
+  for (let i = 1; i <= pages; i++) {
+    const b = document.createElement('button');
+    b.className = 'pag-btn' + (i===currentPage?' active':'');
+    b.textContent = i;
+    b.onclick = (pg => () => { currentPage=pg; renderLancPage(); })(i);
+    btns.appendChild(b);
+  }
+  const next = document.createElement('button');
+  next.className = 'pag-btn'; next.textContent = '→'; next.disabled = currentPage >= pages;
+  next.onclick = () => { currentPage++; renderLancPage(); };
+  btns.appendChild(next);
+}
+
+// ── CAT FILTER UPDATE ──
+function updateCatFilter() {
+  const cats = [...new Set(trans.map(t => t.cat))].sort();
+  const sel = document.getElementById('filt-cat');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todas as categorias</option>';
+  cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+  sel.value = cur;
+}
+
+// ── CHART ──
+function renderChart() {
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ key: d.toISOString().slice(0,7), label: fmtMonth(d.toISOString()) });
+  }
+  const data = months.map(m => ({
+    label: m.label,
+    rec: trans.filter(t => t.data.startsWith(m.key) && t.tipo==='receita').reduce((s,t) => s+t.val, 0),
+    des: trans.filter(t => t.data.startsWith(m.key) && t.tipo==='despesa').reduce((s,t) => s+t.val, 0),
+  }));
+  const maxVal = Math.max(...data.map(d => Math.max(d.rec, d.des)), 1);
+  const W = 400, H = 140, PAD = 6, BOTTOM = 20;
+  const barW = (W - PAD * 2) / (data.length * 2 + data.length - 1);
+  const groupW = barW * 2 + barW * 0.5;
+  let svg = '';
+  // grid lines
+  for (let i = 0; i <= 4; i++) {
+    const y = PAD + ((H - BOTTOM - PAD) * i / 4);
+    svg += `<line x1="0" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}" stroke="#2a2d35" stroke-width="0.5"/>`;
+  }
+  data.forEach((d, i) => {
+    const gx = PAD + i * (groupW + barW * 0.5);
+    const rh = ((d.rec / maxVal) * (H - BOTTOM - PAD - 4));
+    const dh = ((d.des / maxVal) * (H - BOTTOM - PAD - 4));
+    const ry = H - BOTTOM - rh;
+    const dy = H - BOTTOM - dh;
+    // bars
+    if (d.rec > 0) svg += `<rect x="${gx.toFixed(1)}" y="${ry.toFixed(1)}" width="${barW.toFixed(1)}" height="${rh.toFixed(1)}" fill="#2ecc8f" rx="2" opacity="0.9"/>`;
+    if (d.des > 0) svg += `<rect x="${(gx+barW+1).toFixed(1)}" y="${dy.toFixed(1)}" width="${barW.toFixed(1)}" height="${dh.toFixed(1)}" fill="#e8524a" rx="2" opacity="0.9"/>`;
+    // label
+    const lx = (gx + barW).toFixed(1);
+    svg += `<text x="${lx}" y="${(H-4).toFixed(1)}" text-anchor="middle" fill="#4a4e5a" font-size="9" font-family="DM Mono, monospace">${d.label}</text>`;
+  });
+  document.getElementById('chart-svg').innerHTML = svg;
+}
+
+// ── CATEGORIES ──
+function renderCats() {
+  const catRec = {}, catDes = {};
+  trans.forEach(t => {
+    if (t.tipo === 'receita') catRec[t.cat] = (catRec[t.cat]||0) + t.val;
+    else catDes[t.cat] = (catDes[t.cat]||0) + t.val;
+  });
+
+  const makeGrid = (obj, cls) => {
+    const entries = Object.entries(obj).sort((a,b) => b[1]-a[1]);
+    if (!entries.length) return '<div style="color:var(--hint);font-size:12px;padding:1rem 0">Nenhum registro</div>';
+    return entries.map(([k,v]) => `<div class="cat-pill"><div class="cat-pill-name">${k}</div><div class="cat-pill-val ${cls}">${fmt(v)}</div></div>`).join('');
+  };
+
+  document.getElementById('cat-rec').innerHTML = makeGrid(catRec, 'rec');
+  document.getElementById('cat-des').innerHTML = makeGrid(catDes, 'des');
+
+  // horizontal bars for despesas
+  const entries = Object.entries(catDes).sort((a,b) => b[1]-a[1]).slice(0,8);
+  const maxV = Math.max(...entries.map(e=>e[1]), 1);
+  const barsEl = document.getElementById('bars-des');
+  if (!entries.length) { barsEl.innerHTML = '<div style="color:var(--hint);font-size:12px;padding:1rem 0">Nenhum registro</div>'; return; }
+  barsEl.innerHTML = entries.map(([k,v]) => {
+    const pct = Math.round((v/maxV)*100);
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span style="color:var(--muted)">${k}</span>
+        <span style="font-family:'DM Mono',monospace;color:var(--red-text)">${fmt(v)}</span>
+      </div>
+      <div style="height:6px;background:var(--surface2);border-radius:999px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:var(--red);border-radius:999px;transition:width 0.4s"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── KEYBOARD ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (document.activeElement.id.startsWith('inp'))) addTrans();
+});
+
+// ── BOOTSTRAP ──
+renderAll();
+</script>
+</body>
+</html>
